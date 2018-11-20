@@ -1,5 +1,18 @@
-// Example testing sketch for various DHT humidity/temperature sensors
-// Written by ladyada, public domain
+/* This sketch takes measurements from DHT 11 (21|22) sensor and time from RTC, 
+ *  then it displays humidity and temperature, and time with date on LCD 16x2.
+ *  Libraries used:
+ *  https://github.com/adafruit/Adafruit_Sensor
+ *  https://github.com/adafruit/DHT-sensor-library
+ *  https://github.com/mcauser/i2cdetect - for detecting physical I2C addresses
+ *  https://github.com/marcoschwartz/LiquidCrystal_I2C - for LCD 16x2
+ *  https://github.com/Makuna/Rtc/wiki - for RTC module
+ *  
+ *  Author: Serhii Synohub
+ *  Github: https://github.com/sergiosiniy
+ *  e-mail: sergio.siniy@gmail.com
+ *  site: http://sergiosiniy.kiev.ua
+ *  
+ */
 
 #include <DHT.h>
 #include <Wire.h>
@@ -11,6 +24,8 @@
 //#define DHTTYPE DHT22   // DHT 22  (AM2302), AM2321
 //#define DHTTYPE DHT21   // DHT 21 (AM2301)
 #define countof(a) (sizeof(a) / sizeof(a[0]))
+
+unsigned long last_used;
 
 // Connect pin 1 (on the left) of the sensor to +5V
 // NOTE: If using a board with 3.3V logic like an Arduino Due connect pin 1
@@ -93,23 +108,16 @@ void setup() {
 }
 
 void loop() {
-  int k = 0;
-  while (k < 10) {
+  if ((millis() - last_used) > 10000) {
+    last_used = millis();
+    lcd.clear();
     printTempHumidity();
-    // Wait a few seconds between measurements.
-    k += 2;
-    delay(2000);
-  }
-  lcd.clear();
-
-  int i = 0;
-  while (i < 7) {
+  }else if ((millis() - las_used) > 7000) {
+    last_used = millis();
+    lcd.clear();
     RtcDateTime now = Rtc.GetDateTime();
     printDateTime(now);
-    i++;
-    delay(1000);
   }
-  lcd.clear();
 }
 
 void printTempHumidity() {
