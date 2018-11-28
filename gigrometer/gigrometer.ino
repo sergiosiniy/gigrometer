@@ -157,8 +157,8 @@ void printDateTime(const RtcDateTime& dt) {
   snprintf_P(datestring,
              countof(datestring),
              PSTR("%02u.%02u.%04u"),
-             dt.Month(),
              dt.Day(),
+             dt.Month(),
              dt.Year());
   snprintf_P(timestring,
              countof(timestring),
