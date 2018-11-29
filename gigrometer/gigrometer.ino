@@ -25,7 +25,9 @@
 //#define DHTTYPE DHT21   // DHT 21 (AM2301)
 #define countof(a) (sizeof(a) / sizeof(a[0]))
 
-unsigned long last_used;
+unsigned long last_time = 0;
+unsigned long lcd_cleaner = 0;
+unsigned long secCount = 0;
 
 // Connect pin 1 (on the left) of the sensor to +5V
 // NOTE: If using a board with 3.3V logic like an Arduino Due connect pin 1
@@ -43,7 +45,7 @@ RtcDS1307<TwoWire> Rtc(Wire);
 LiquidCrystal_I2C lcd(0x27, 16, 2); // set the LCD address to 0x27 for a 16 chars and 2 line display
 
 void setup() {
-  //Serial.begin(9600); //uncomment to print to console
+  Serial.begin(9600); //uncomment to print to console
   dht.begin();
   lcd.init();                      // initialize the lcd
   lcd.init();
@@ -105,18 +107,36 @@ void setup() {
   Rtc.SetSquareWavePin(DS1307SquareWaveOut_Low);
 
   lcd.clear();
+  printTempHumidity();
 }
 
 void loop() {
-  if ((millis() - last_used) > 10000) {
-    last_used = millis();
-    lcd.clear();
-    printTempHumidity();
-  }else if ((millis() - las_used) > 7000) {
-    last_used = millis();
-    lcd.clear();
-    RtcDateTime now = Rtc.GetDateTime();
-    printDateTime(now);
+  if ((millis() - last_time) > 10000) {
+    if ((millis() - lcd_cleaner) > 10000){
+      lcd_cleaner = millis();      
+      lcd.clear();
+    }
+    if (millis() - secCount > 300){
+      printTempHumidity();
+      Serial.println("Temp");
+      secCount = millis();
+    }
+    if((millis() - last_time) > 20000) {
+      last_time = millis();
+    }
+  }else if ((millis() - last_time) > 0) {
+    if ((millis() - lcd_cleaner) > 10000){
+      lcd_cleaner = millis();      
+      lcd.clear();
+    }
+    
+    if (millis() - secCount > 300){
+      RtcDateTime now = Rtc.GetDateTime();
+      printDateTime(now);
+      secCount = millis();
+      Serial.println("Date");
+    }
+    
   }
 }
 
@@ -133,15 +153,13 @@ void printTempHumidity() {
     return;
   }
 
-  // Compute heat index in Celsius (isFahreheit = false)
-  float hic = dht.computeHeatIndex(t, h, false);
   lcd.backlight();
   lcd.setCursor(0, 0);
   lcd.print("Humidity: ");
   lcd.setCursor(10, 0);
   lcd.print((int)h);
   lcd.setCursor(12, 0);
-  lcd.print("%");
+  lcd.print("% ");
   lcd.setCursor(0, 1);
   lcd.print("Temperature: ");
   lcd.setCursor(13, 1);
